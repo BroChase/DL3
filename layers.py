@@ -15,9 +15,9 @@ class Convolutional:
 
         self.stride = stride
         self.padding = padding
-
+        # w = (number of filters, dimensions, filter height, filter width)
         self.w = np.random.randn(n_filter, self.d_x, h_filter, w_filter) / np.sqrt(n_filter / 2)
-
+        # bias = (n_filters, 1)
         self.b = np.zeros((self.n_filter, 1))
 
         self.params = [self.w, self.b]
@@ -27,7 +27,7 @@ class Convolutional:
 
         if not self.h_out.is_integer() or not self.w_out.is_integer():
             raise Exception('Invalid dimensions!')
-
+        # convert the floats of h_out and w_out to ints
         self.h_out, self.w_out = int(self.h_out), int(self.w_out)
         self.out_dim = (self.n_filter, self.h_out, self.w_out)
 

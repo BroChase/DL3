@@ -11,30 +11,62 @@ class NnModels:
     @staticmethod
     def make_cloths_cnn(x_dim, num_class):
         # convolutional layer with x dimentions 2 filters with kernel 3x3 stride of 1 and padding of 0
-        layer0 = lay.Convolutional(x_dim, n_filter=2, h_filter=3, w_filter=3, stride=1, padding=0)
+        conv = lay.Convolutional(x_dim, n_filter=2, h_filter=3, w_filter=3, stride=1, padding=0)
         # activation for layer1 is sigmoid
-        layer0_activation = mf.Sigmoid()
+        sig = mf.Sigmoid()
 
         # MaxPool layer 2x2 todo should my stride be 1 or 2 or ?
-        layer1 = lay.MaxPool(layer0.out_dim, size=2, stride=2)
+        maxpool = lay.MaxPool(conv.out_dim, size=2, stride=1)
 
         # convolutional layer with x dimentions 2 filters kernel size of 3x3 stride of 1 and padding of 0
-        layer2 = lay.Convolutional(layer1.out_dim, n_filter=2, h_filter=3, w_filter=3, stride=1, padding=0)
+        conv2 = lay.Convolutional(maxpool.out_dim, n_filter=2, h_filter=3, w_filter=3, stride=1, padding=0)
         # activation for layer 2 is rectified linear
-        layer2_activation = mf.ReLU()
+        relu = mf.ReLU()
 
         # MaxPool layer 2x2
-        layer3 = lay.MaxPool(layer2.out_dim, size=2, stride=2)
+        maxpool2 = lay.MaxPool(conv2.out_dim, size=2, stride=1)
 
         # Flatten the image for input into fully connected layer
-        layer4 = lay.Flatten()
+        flat = lay.Flatten()
 
         # Fully connected layer with 50 neurons
-        layer5 = lay.FullyConnected(np.prod(layer3.out_dim), 50)
+        fc1 = lay.FullyConnected(np.prod(maxpool2.out_dim), 50)
         # Activation for fully connected layer of 50 neurons is tanH
-        layer5_activation = mf.TanH()
+        tanh = mf.TanH()
 
         # Fully connected layer with 10 neurons 'output layer'
-        layer6 = lay.FullyConnected(50, num_class)
+        out = lay.FullyConnected(50, num_class)
 
-        return [layer0, layer0_activation, layer1, layer2, layer2_activation, layer3, layer4]
+        return [conv, sig, maxpool, conv2, relu, maxpool2, flat, fc1, tanh, out]
+
+class CNN:
+    def __init__(self, layers, loss_func):
+        self.layers = layers
+        self.params = []
+        for layer in self.layers:
+            self.params.append(layer.params)
+        self.loss_func = loss_func
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer.forward(x)
+        return x
+
+    def backward(self, dout):
+        grads = []
+        for layer in reversed(self.layers):
+            dout, grad = layer.backward(dout)
+            grads.append(grad)
+        return grads
+
+    def train_step(self, x, y):
+        out = self.forward(x)
+        loss, dout = self.loss_func(out, y)
+        loss += mf.MiscFunctions.l2_regularization(self.layers)
+        grads = self.backward(dout)
+        grads = mf.MiscFunctions.delta_l2_regularization(self.layers, grads)
+        return loss, grads
+
+    def predict(self, x):
+        x = self.forward(x)
+        return np.argmax(mf.MiscFunctions.soft_max(x), axis=1)
