@@ -7,6 +7,7 @@ from sklearn.utils import shuffle
 from sklearn.metrics import accuracy_score
 from scipy.special import expit
 
+
 class MiscFunctions:
     @staticmethod
     def reshape_x(x_array):
@@ -19,24 +20,38 @@ class MiscFunctions:
 
     @staticmethod
     def soft_max(x):
+        """
+        Stable softmax function as to not over run the float max of python 10^308
+        :param x:
+        :return:
+        """
         x = np.exp(x - np.max(x, axis=1, keepdims=True))
         return x/np.sum(x, axis=1, keepdims=True)
 
     @staticmethod
     def SoftmaxLoss(x, y):
-        m = y.shape[0]
-        p = MiscFunctions.soft_max(x)
-        log_likelihood = -np.log(p[range(m), y])
-        loss = np.sum(log_likelihood)/m
+        """
+        Performs softmax on X and then calculates cross_entropy 'Loss'
+        :param x: Output of the fully connected layer for output Samples x classes
+        :param y: 1 x number of examples 'true values of the samples of x'
+        :return: Loss and delta of X
+        """
+        prediction = MiscFunctions.soft_max(x)
+        samples = y.shape[0]
+        # from the predicted values take the value in prediction under the column that it is predicted to be.
+        # If column 7 for predicted is .123432 then take that value and put it into log_likelibood for the first sample.
+        z = prediction[range(samples), y]
+        log_likelihood = -np.log(z)
+        # The Loss is the Sum of the likelihood / sample size
+        loss = np.sum(log_likelihood)/samples
 
-        dx = p.copy()
-        dx[range(m), y] -= 1
-        dx /= m
-        return loss, dx
+        delta_x = prediction.copy()
+        # from the 'true y position' in the predicted x subtract 1
+        delta_x[range(samples), y] -= 1
+        # devide all the values in delta_x by the sample size
+        delta_x /= samples
 
-    @staticmethod
-    def accuracy(y_true, y_pred):
-        return np.mean(y_pred == y_true)
+        return loss, delta_x
 
     @staticmethod
     def l2_regularization(layers, lam=0.001):
@@ -112,7 +127,6 @@ class MiscFunctions:
                 loss, grads = nnet.train_step(x_mini, y_mini)
                 MiscFunctions.momentum_update(velocity, nnet.params, grads, learning_rate=lr, mu=mu)
             if verbose:
-                # z = nnet.predict(x_train)
                 train_acc = accuracy_score(y_train, nnet.predict(x_train))
                 test_acc = accuracy_score(y_test, nnet.predict(x_test))
                 print('Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}'.format(loss, train_acc, test_acc))
@@ -130,7 +144,7 @@ class TanH:
         return out
 
     def backward(self, dout):
-        dx = dout * (1 - self.out **2)
+        dx = dout * (1 - self.out ** 2)
         return dx, []
 
 

@@ -10,6 +10,12 @@ import miscfunctions as mf
 class NnModels:
     @staticmethod
     def make_cloths_cnn(x_dim, num_class):
+        """
+        Create the CNN architecture
+        :param x_dim: Dimensions of X being passed in
+        :param num_class: Number of classes 'cloths=10' 0-9
+        :return: The layers for the model architecture
+        """
         # convolutional layer with x dimentions 2 filters with kernel 3x3 stride of 1 and padding of 0
         conv = lay.Convolutional(x_dim, n_filter=2, h_filter=3, w_filter=3, stride=1, padding=0)
         # activation for layer1 is sigmoid
@@ -41,10 +47,13 @@ class NnModels:
 
 class CNN:
     def __init__(self, layers, loss_func):
+        # layers are the models architecture conv, max, conv, max, flat, full, output
         self.layers = layers
+        # save the parameters of each layer in a list params
         self.params = []
         for layer in self.layers:
             self.params.append(layer.params)
+        # loss function to be used.  In this case
         self.loss_func = loss_func
 
     def forward(self, x):

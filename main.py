@@ -25,8 +25,8 @@ if __name__ == '__main__':
     x_test = (x_test - np.min(x_test)) / (np.max(x_test) - np.min(x_test))
     # Dimensions of one image
     cloths_dim = (1, 28, 28)
-    # Create the Network. 
+    # Create the Network.
     cnn = nn.CNN(nn.NnModels.make_cloths_cnn(cloths_dim, num_class=10), loss_func=mf.SoftmaxLoss)
-
+    # todo try to change the learning rate for sgd.  .1 seems to be oversetpping getting 5 for all outputs.
     # cnn = mf.sgd(cnn, x_train, y_train, minibatch_size=200, epoch=20, learning_rate=0.1, x_test=x_test, y_test=y_test)
     cnn = mf.sgd_momentum(cnn, x_train, y_train, minibatch_size=200, epoch=20, lr=0.1, mu=0.9, x_test=x_test, y_test=y_test)
