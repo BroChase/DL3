@@ -4,6 +4,7 @@
 
 import numpy as np
 from sklearn.utils import shuffle
+from sklearn.metrics import accuracy_score
 from scipy.special import expit
 
 class MiscFunctions:
@@ -73,6 +74,7 @@ class MiscFunctions:
     @staticmethod
     def sgd(nnet, x_train, y_train, minibatch_size, epoch, learning_rate, verbose=True, x_test=None, y_test=None):
         minibatches = MiscFunctions.get_minibatches(x_train, y_train, minibatch_size)
+
         for i in range(epoch):
             loss = 0
             if verbose:
@@ -81,9 +83,40 @@ class MiscFunctions:
                 loss, grads = nnet.train_step(x_mini, y_mini)
                 MiscFunctions.vanilla_update(nnet.params, grads, learning_rate=learning_rate)
             if verbose:
-                train_acc = MiscFunctions.accuracy(y_train, nnet.predict(x_train))
-                test_acc = MiscFunctions.accuracy(y_test, nnet.predict(x_test))
+                z = nnet.predict(x_train)
+                train_acc = accuracy_score(y_train, z)
+                test_acc = accuracy_score(y_test, nnet.predict(x_test))
                 print('Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}'.format(loss, train_acc, test_acc))
+        return nnet
+
+    @staticmethod
+    def momentum_update(velocity, params, grads, learning_rate=0.01, mu=0.9):
+        for v, param, grad in zip(velocity, params, reversed(grads)):
+            for i in range(len(grad)):
+                v[i] = mu*v[i] + learning_rate * grad[i]
+                param[i] -= v[i]
+
+    @staticmethod
+    def sgd_momentum(nnet, x_train, y_train, minibatch_size, epoch, lr, mu, x_test, y_test, verbose=True):
+        minibatches = MiscFunctions.get_minibatches(x_train, y_train, minibatch_size)
+        for i in range(epoch):
+            loss = 0
+            velocity = []
+            for param_layer in nnet.params:
+                p = [np.zeros_like(param) for param in list(param_layer)]
+                velocity.append(p)
+
+            if verbose:
+                print('Epoch {0}'.format(i + 1))
+            for x_mini, y_mini in minibatches:
+                loss, grads = nnet.train_step(x_mini, y_mini)
+                MiscFunctions.momentum_update(velocity, nnet.params, grads, learning_rate=lr, mu=mu)
+            if verbose:
+                # z = nnet.predict(x_train)
+                train_acc = accuracy_score(y_train, nnet.predict(x_train))
+                test_acc = accuracy_score(y_test, nnet.predict(x_test))
+                print('Loss = {0} | Training Accuracy = {1} | Test Accuracy = {2}'.format(loss, train_acc, test_acc))
+
         return nnet
 
 
