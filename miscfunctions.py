@@ -28,7 +28,7 @@ class MiscFunctions:
         x = np.exp(x - np.max(x, axis=1, keepdims=True))
         return x/np.sum(x, axis=1, keepdims=True)
 
-    @staticmethod
+    @staticmethod # loss_function
     def SoftmaxLoss(x, y):
         """
         Performs softmax on X and then calculates cross_entropy 'Loss'
@@ -139,13 +139,18 @@ class TanH:
         self.params = []
 
     def forward(self, x):
+        """
+        Passes the Matrix X into the tanh function for activation.
+        :param x: nxm Matrix
+        :return:  nxm matrix
+        """
         out = np.tanh(x)
         self.out = out
         return out
 
     def backward(self, dout):
-        dx = dout * (1 - self.out ** 2)
-        return dx, []
+        delta_x = dout * (1 - self.out ** 2)
+        return delta_x, []
 
 
 class ReLU:
